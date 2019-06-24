@@ -82,7 +82,7 @@ class RedditbotSpider(scrapy.Spider):
         print(repr(failure))
         next_page = self.links.pop(0)
         if next_page is not None:
-            yield scrapy.Request(next_page, callback=self.parse, errback=self.errback_httpbin, dont_filter=True)
+            yield scrapy.Request(next_page, callback=self.parse, errback=self.errback_httpbin)
         # in case you want to do something special for some errors,
         # you may need the failure's type:
 
@@ -90,16 +90,19 @@ class RedditbotSpider(scrapy.Spider):
             # these exceptions come from HttpError spider middleware
             # you can get the non-200 response
             response = failure.value.response
-            self.logger.error('HttpError on %s', response.url)
+            self.logger.info('HttpError on %s', response.url)
+            yield scrapy.Request(next_page, callback=self.parse, errback=self.errback_httpbin)
 
         elif failure.check(DNSLookupError):
             # this is the original request
             request = failure.request
-            self.logger.error('DNSLookupError on %s', request.url)
+            self.logger.info('DNSLookupError on %s', request.url)
+            yield scrapy.Request(next_page, callback=self.parse, errback=self.errback_httpbin)
 
         elif failure.check(TimeoutError, TCPTimedOutError):
             request = failure.request
-            self.logger.error('TimeoutError on %s', request.url)
+            self.logger.info('TimeoutError on %s', request.url)
+            yield scrapy.Request(next_page, callback=self.parse, errback=self.errback_httpbin)
 
 """
 Requirements:
